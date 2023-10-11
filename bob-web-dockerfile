@@ -1,0 +1,5 @@
+FROM centos:7
+ARG address=wasserver-svc
+RUN yum install -y httpd && yum clean all
+RUN echo -e "ServerName localhost\n<VirtualHost *:80>\n        ServerName localhost\n        ProxyRequests Off\n        ProxyPreserveHost On\n        <Proxy *>\n                Order deny,allow\n                Allow from all\n        </Proxy>\n        ProxyPass / http://${address}:8080/ disablereuse=on\n        ProxyPassReverse / http://${address}:8080/\n</VirtualHost>" >> /etc/httpd/conf/httpd.conf
+CMD ["/usr/sbin/httpd", "-DFOREGROUND"]

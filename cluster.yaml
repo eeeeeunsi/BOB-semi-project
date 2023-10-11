@@ -1,0 +1,38 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: petclinic-k8s # 생성할 클러스터 명
+  region:  ap-northeast-2 # 클러스터를 생성할 리전
+  version: "1.25"
+
+vpc:
+  subnets:
+    private:
+      ap-northeast-2a: { id: subnet-0d3b9fa15ced6abd5 } # 서브넷 ID - 각 az의 private2 sbnt
+      ap-northeast-2c: { id: subnet-036a6aaf80bce1c7d }
+
+managedNodeGroups: # 클러스터의 노드 그룹 생성
+  - name: petclinic-workers-ng # 클러스터의 노드 그룹명
+    labels: { role: workers }
+    instanceType: t3.medium # 클러스터 워커 노드의 인스턴스 타입
+    desiredCapacity: 2 # 클러스터 워커 노드의 갯수
+    volumeSize: 20  # 클러스터 워커 노드의 EBS 용량 (단위: GiB)
+    privateNetworking: true
+    ssh: # ssh 접근 허용
+      publicKeyName: petclinic-k8s # 키페어
+      allow: true
+      sourceSecurityGroupIds: ['sg-055d888a03b11f8b4'] #원격 액세스 권한 허용 보안그룹id
+    iam:
+      withAddonPolicies:
+        imageBuilder: true # Amazon ECR에 대한 권한 추가
+        albIngress: true  # albIngress에 대한 권한 추가
+        cloudWatch: true # cloudWatch에 대한 권한 추가
+        autoScaler: true # auto scaling에 대한 권한 추가
+        ebs: true # EBS CSI Driver에 대한 권한 추가
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"]
+
+iam:
+  withOIDC: true

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webserver
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: 560971842042.dkr.ecr.ap-northeast-2.amazonaws.com/bob:web
+        name:  web
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webserver-svc
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: web
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+spec:
+  rules:
+   - http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: webserver-svc
+              port:
+                number: 80
+        - path: /test
+          pathType: Prefix
+          backend:
+            service:
+              name: test-svc
+              port:
+                number: 80

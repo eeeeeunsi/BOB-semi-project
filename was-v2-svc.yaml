@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wasserver
+  annotations:
+    kubernetes.io/change-cause: version 2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: was
+  template:
+    metadata:
+      name: was
+      labels:
+        app: was
+    spec:
+      containers:
+      - name: was
+        image: 560971842042.dkr.ecr.ap-northeast-2.amazonaws.com/bob:was-v2
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+        livenessProbe:                        # 추가
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wasserver-svc
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: was
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: wasserver-hpa
+spec:
+  maxReplicas: 10
+  minReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: wasserver
+  targetCPUUtilizationPercentage: 50

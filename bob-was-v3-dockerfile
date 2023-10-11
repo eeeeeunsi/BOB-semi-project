@@ -1,0 +1,9 @@
+# bob-was-dockerfile
+FROM openjdk:slim-buster AS builder
+ADD spring-petclinic-v3.tar .
+WORKDIR spring-petclinic
+RUN ./mvnw package -DskipTests=true
+
+FROM openjdk:slim-buster
+COPY --from=builder /spring-petclinic/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar","-Dspring.profiles.active=mysql", "app.jar"]
